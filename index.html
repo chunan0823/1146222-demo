@@ -4,9 +4,50 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>零浪費廚房 ZWK | 讓永續成為日常</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="/index.css">
-</head>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sage: '#8DAA91',
+            oatmeal: '#F5F5DC',
+            earth: '#4A5D4E',
+          },
+          borderRadius: {
+            '2xl': '1.5rem',
+            '3xl': '2rem',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      scroll-behavior: smooth;
+      background-color: #FDFDF5; /* 確保背景色正確 */
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .earth-shadow {
+      box-shadow: 0 10px 30px -10px rgba(141, 170, 145, 0.2);
+    }
+    /* 修正 Vite 打包後可能出現的圖片溢出問題 */
+    img { max-width: 100%; height: auto; }
+  </style>
+
+  </head>
 <body class="bg-[#FDFDF5] text-earth">
   <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
