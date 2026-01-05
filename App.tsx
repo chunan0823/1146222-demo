@@ -67,7 +67,13 @@ interface ActivePlan {
   features: string[];
 }
 
-// --- Product Data ---
+// --- Constants ---
+const PLANS = [
+  { title: "輕盈寶盒", limit: 5, weekly: "980", biweekly: "1,180", features: ["免運費配送", "基礎 AI 消耗評估", "玻璃罐殺菌清潔", "產地故事小卡"] },
+  { title: "標準寶盒", limit: 8, weekly: "1,480", biweekly: "1,680", features: ["優先配送權", "進階 AI 消耗評估", "玻璃罐殺菌清潔", "專屬小農訪談報告", "節日限定食材"] },
+  { title: "盛宴寶盒", limit: 12, weekly: "1,980", biweekly: "2,280", features: ["1對1 營養建議", "深度 AI 消耗評估", "玻璃罐殺菌清潔", "所有限定食材優先選", "專屬廚藝工作坊"] }
+];
+
 const PRODUCTS: Product[] = [
   { id: 1, name: "有機大燕麥片", price: 240, unit: "500g", image: "https://i.postimg.cc/RVCdPMXC/6130200410P1.webp?auto=format&fit=crop&q=80&w=800", category: "穀物" },
   { id: 2, name: "冷壓初榨橄欖油", price: 580, unit: "500ml", image: "https://i.postimg.cc/zB0b31Wd/leng-ya-chu-zha-yi-da-li-gan-lan-you-yuan-ping2025xin-bao-zhuang02sq.jpg?auto=format&fit=crop&q=80&w=800", category: "油品" },
@@ -86,6 +92,74 @@ const PRODUCTS: Product[] = [
 // --- Shared Components ---
 
 /**
+ * 方案選擇彈窗：點擊「快速訂購」後的第一步
+ */
+const PlanSelectionModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (plan: ActivePlan) => void;
+}> = ({ isOpen, onClose, onSelect }) => {
+  const [isWeekly, setIsWeekly] = useState(true);
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[130] flex items-center justify-center px-6 overflow-y-auto py-10">
+      <div className="absolute inset-0 bg-earth/80 backdrop-blur-md transition-opacity" onClick={onClose}></div>
+      <div className="relative w-full max-w-6xl bg-[#FDFDF5] rounded-[4rem] shadow-2xl overflow-hidden animate-slideUp p-8 md:p-16">
+        <button onClick={onClose} className="absolute top-10 right-10 text-earth/30 hover:text-earth transition-colors"><X size={32} /></button>
+        
+        <div className="text-center mb-12 space-y-4">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-sage/10 text-sage rounded-full text-xs font-bold tracking-widest uppercase"><Sparkles size={14} /> Step 1: 選擇您的永續方案</div>
+          <h2 className="text-4xl font-bold text-earth">準備好開啟循環生活了嗎？</h2>
+          <div className="flex items-center justify-center gap-6 pt-4">
+            <span className={`text-sm font-bold transition-colors ${isWeekly ? 'text-earth' : 'text-earth/30'}`}>每週配送</span>
+            <button onClick={() => setIsWeekly(!isWeekly)} className="w-16 h-8 bg-stone-200 rounded-full p-1 relative transition-all">
+              <div className={`w-6 h-6 bg-sage rounded-full shadow-sm transition-all transform ${isWeekly ? 'translate-x-0' : 'translate-x-8'}`}></div>
+            </button>
+            <span className={`text-sm font-bold transition-colors ${!isWeekly ? 'text-earth' : 'text-earth/30'}`}>隔週配送</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {PLANS.map((plan, i) => (
+            <div 
+              key={i} 
+              onClick={() => onSelect({ 
+                title: plan.title, 
+                limit: plan.limit, 
+                price: isWeekly ? plan.weekly : plan.biweekly,
+                features: plan.features 
+              })}
+              className={`group cursor-pointer p-10 rounded-[3rem] border-2 transition-all duration-500 flex flex-col ${i === 1 ? 'bg-earth text-white border-earth shadow-2xl' : 'bg-white border-stone-100 text-earth hover:border-sage'}`}
+            >
+              <div className="mb-6">
+                <h4 className="text-2xl font-bold mb-2">{plan.title}</h4>
+                <p className={`text-sm font-medium ${i === 1 ? 'text-sage' : 'text-earth/50'}`}>任選 {plan.limit} 款食材</p>
+              </div>
+              <div className="mb-8">
+                <span className="text-4xl font-bold">NT$ {isWeekly ? plan.weekly : plan.biweekly}</span>
+                <span className={`text-xs font-bold ml-2 ${i === 1 ? 'text-white/40' : 'text-earth/40'}`}>/ 每趟</span>
+              </div>
+              <ul className="space-y-4 mb-10 flex-1">
+                {plan.features.slice(0, 3).map((f, fi) => (
+                  <li key={fi} className="flex items-start gap-3 text-xs font-medium">
+                    <Check size={16} className="text-sage shrink-0" />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className={`w-full py-4 rounded-2xl font-bold text-center transition-all ${i === 1 ? 'bg-sage text-white group-hover:bg-white group-hover:text-earth' : 'bg-stone-50 text-earth group-hover:bg-sage group-hover:text-white'}`}>
+                選擇此方案
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
  * 方案預覽窗：在進入商店前的緩衝層
  */
 const PlanPreviewModal: React.FC<{ 
@@ -95,7 +169,7 @@ const PlanPreviewModal: React.FC<{
 }> = ({ plan, onClose, onConfirm }) => {
   if (!plan) return null;
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center px-6">
+    <div className="fixed inset-0 z-[140] flex items-center justify-center px-6">
       <div className="absolute inset-0 bg-earth/60 backdrop-blur-md transition-opacity" onClick={onClose}></div>
       <div className="relative w-full max-w-xl bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-slideUp">
         <div className="p-10 sm:p-14">
@@ -196,9 +270,9 @@ const CheckoutModal: React.FC<{
 }> = ({ isOpen, onClose, quantities, activePlan }) => {
   if (!isOpen) return null;
 
-  const cartItems = PRODUCTS.filter(p => quantities[p.id] > 0);
-  const total = activePlan ? parseInt(activePlan.price.replace(',', '')) : cartItems.reduce((acc, p) => acc + (p.price * quantities[p.id]), 0);
-  const totalPlasticSaved = (cartItems.reduce((acc, p) => acc + quantities[p.id], 0) * 0.05).toFixed(2);
+  const cartItems = PRODUCTS.filter(p => (quantities[p.id] || 0) > 0);
+  const total = activePlan ? parseInt(activePlan.price.replace(',', '')) : cartItems.reduce((acc, p) => acc + (p.price * (quantities[p.id] || 0)), 0);
+  const totalPlasticSaved = (cartItems.reduce((acc, p) => acc + (quantities[p.id] || 0), 0) * 0.05).toFixed(2);
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center px-6">
@@ -228,7 +302,7 @@ const CheckoutModal: React.FC<{
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-earth">{activePlan ? '方案包含' : `NT$ ${item.price * quantities[item.id]}`}</p>
+                  <p className="font-bold text-earth">{activePlan ? '方案包含' : `NT$ ${item.price * (quantities[item.id] || 0)}`}</p>
                 </div>
               </div>
             ))}
@@ -259,7 +333,7 @@ const CheckoutModal: React.FC<{
             </div>
           </div>
 
-          <button className="w-full py-5 bg-earth text-white rounded-2xl font-bold text-lg hover:bg-sage transition-all shadow-xl flex items-center justify-center gap-3 group active:scale-95">
+          <button className="w-full py-5 bg-earth text-white rounded-2xl font-bold text-lg hover:bg-earth transition-all shadow-xl flex items-center justify-center gap-3 group active:scale-95">
             <CreditCard size={20} className="group-hover:rotate-12 transition-transform" /> {activePlan ? '確認並啟動訂閱' : '確認並前往支付'}
           </button>
         </div>
@@ -285,7 +359,7 @@ const ImpactReportModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
             <div className="md:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-8">
               {[
                 { label: '減少塑膠排放量', value: '1,540 kg', icon: <Recycle className="text-sage" />, desc: '約等於 30,800 個 500ml 塑膠瓶' },
-                { label: '節省配送碳足跡', value: '8,200 km', icon: <Truck className="text-sage" />, desc: '相當於環繞台灣 7.5 圈' },
+                { label: '節省配送 carbon 足跡', value: '8,200 km', icon: <Truck className="text-sage" />, desc: '相當於環繞台灣 7.5 圈' },
                 { label: '回收循環玻璃罐', value: '12,450 個', icon: <RefreshCw className="text-sage" />, desc: '節省了約 4,980kg 的玻璃原料消耗' },
                 { label: '支持台灣小農單位', value: '24 戶', icon: <Leaf className="text-sage" />, desc: '平均提升小農收益 35%' }
               ].map((stat, i) => (
@@ -399,12 +473,6 @@ const HomeView: React.FC<{
   const heroImage = "https://i.postimg.cc/HxBHbY6z/5000627.jpg";
   const [isWeekly, setIsWeekly] = useState(true);
 
-  const plans = [
-    { title: "輕盈寶盒", limit: 5, weekly: "980", biweekly: "1,180", features: ["免運費配送", "基礎 AI 消耗評估", "玻璃罐殺菌清潔", "產地故事小卡"] },
-    { title: "標準寶盒", limit: 8, weekly: "1,480", biweekly: "1,680", features: ["優先配送權", "進階 AI 消耗評估", "玻璃罐殺菌清潔", "專屬小農訪談報告", "節日限定食材"] },
-    { title: "盛宴寶盒", limit: 12, weekly: "1,980", biweekly: "2,280", features: ["1對1 營養建議", "深度 AI 消耗評估", "玻璃罐殺菌清潔", "所有限定食材優先選", "專屬廚藝工作坊"] }
-  ];
-
   return (
     <div className="animate-fadeIn">
       {/* Hero */}
@@ -463,19 +531,15 @@ const HomeView: React.FC<{
             
             <div className="flex items-center justify-center gap-6 pt-4">
               <span className={`text-sm font-bold transition-colors ${isWeekly ? 'text-earth' : 'text-earth/30'}`}>每週配送</span>
-              <button 
-                onClick={() => setIsWeekly(!isWeekly)}
-                className="w-16 h-8 bg-stone-100 rounded-full p-1 relative transition-all"
-              >
+              <button onClick={() => setIsWeekly(!isWeekly)} className="w-16 h-8 bg-stone-100 rounded-full p-1 relative transition-all">
                 <div className={`w-6 h-6 bg-sage rounded-full shadow-sm transition-all transform ${isWeekly ? 'translate-x-0' : 'translate-x-8'}`}></div>
               </button>
               <span className={`text-sm font-bold transition-colors ${!isWeekly ? 'text-earth' : 'text-earth/30'}`}>隔週配送</span>
             </div>
-            <p className="text-xs text-sage font-bold">每週配送方案可享 85 折優惠</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {plans.map((plan, i) => (
+            {PLANS.map((plan, i) => (
               <div key={i} className={`p-10 rounded-[2.5rem] border transition-all duration-500 flex flex-col ${i === 1 ? 'bg-earth text-white border-earth shadow-2xl scale-105 z-10' : 'bg-stone-50 border-stone-100 text-earth hover:shadow-xl'}`}>
                 <div className="mb-8">
                   <h4 className="text-2xl font-bold mb-2">{plan.title}</h4>
@@ -488,7 +552,7 @@ const HomeView: React.FC<{
                 <ul className="space-y-4 mb-12 flex-1">
                   {plan.features.map((f, fi) => (
                     <li key={fi} className="flex items-start gap-3 text-sm font-medium">
-                      <Check size={18} className={i === 1 ? 'text-sage' : 'text-sage'} />
+                      <Check size={18} className="text-sage" />
                       <span>{f}</span>
                     </li>
                   ))}
@@ -504,37 +568,6 @@ const HomeView: React.FC<{
                 >
                   立即訂閱
                 </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Product Gallery (Optional shortcut) */}
-      <section id="products" className="py-32 bg-stone-50/50 scroll-mt-24">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-            <div className="space-y-4">
-              <h2 className="text-4xl md:text-5xl font-bold text-earth">嚴選常備食材</h2>
-              <p className="text-lg text-earth/70">所有食材皆選自永續農場，由 ZWK 玻璃罐盛裝。</p>
-            </div>
-            <button onClick={() => onShopClick()} className="flex items-center gap-2 text-sage font-bold hover:gap-4 transition-all group">
-              立即前往商店 <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-            {PRODUCTS.slice(0, 6).map((p) => (
-              <div key={p.id} className="group bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500">
-                <div className="relative aspect-square overflow-hidden bg-stone-100">
-                  <img src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                  <div className="absolute inset-0 bg-earth/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-6">
-                    <button onClick={() => onShopClick()} className="w-full py-4 bg-white rounded-2xl font-bold text-earth hover:bg-sage hover:text-white transition-all shadow-xl active:scale-95">查看商品詳情</button>
-                  </div>
-                </div>
-                <div className="p-8">
-                  <div className="flex justify-between items-start mb-2"><h4 className="text-xl font-bold">{p.name}</h4><span className="text-earth/50 text-xs font-medium">{p.unit}</span></div>
-                  <div className="text-2xl font-bold text-sage">NT$ {p.price}</div>
-                </div>
               </div>
             ))}
           </div>
@@ -581,7 +614,8 @@ const ShopView: React.FC<{
 
   const categories = ['全部', ...new Set(PRODUCTS.map(p => p.category))];
   
-  const totalItems = Object.values(quantities).reduce((acc, curr) => acc + curr, 0);
+  // 明確標記 accumulator 和 current 為 number
+  const totalItems = Object.values(quantities).reduce((acc: number, curr: number) => acc + (curr || 0), 0);
 
   const updateQty = (id: number, delta: number) => {
     if (activePlan && delta > 0 && totalItems >= activePlan.limit) return;
@@ -596,7 +630,6 @@ const ShopView: React.FC<{
 
   return (
     <div className="animate-fadeIn pb-32">
-      {/* Progress Bar for Active Plan */}
       {activePlan && (
         <div className="fixed top-20 left-0 right-0 z-[45] animate-slideDown">
           <div className="bg-earth text-white py-3 px-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg border-b border-white/20">
@@ -648,11 +681,7 @@ const ShopView: React.FC<{
         <div className="max-w-7xl mx-auto px-6 overflow-x-auto">
           <div className="flex gap-4 min-w-max">
             {categories.map(cat => (
-              <button 
-                key={cat}
-                onClick={() => setFilter(cat)}
-                className={`px-8 py-3 rounded-full font-bold transition-all text-sm ${filter === cat ? 'bg-earth text-white' : 'bg-stone-50 text-earth/60 hover:bg-stone-100'}`}
-              >
+              <button key={cat} onClick={() => setFilter(cat)} className={`px-8 py-3 rounded-full font-bold transition-all text-sm ${filter === cat ? 'bg-earth text-white' : 'bg-stone-50 text-earth/60 hover:bg-stone-100'}`}>
                 {cat}
               </button>
             ))}
@@ -701,7 +730,7 @@ const ShopView: React.FC<{
   );
 };
 
-// ... (Other views like FAQ, Delivery, Origins, About remain the same)
+// ... (Other views About, Origins, FAQ, Delivery remain same)
 const AboutView: React.FC = () => (
   <section className="py-40 px-6 animate-fadeIn">
     <div className="max-w-7xl mx-auto">
@@ -830,14 +859,14 @@ const DeliveryView: React.FC = () => (
   </section>
 );
 
-// --- Main Layout ---
-
+// --- Navbar Component ---
 const Navbar: React.FC<{ 
   currentPage: Page; 
   onPageChange: (p: Page) => void; 
   onNavigateToSection: (sectionId: string) => void;
-  onAuthClick: () => void 
-}> = ({ currentPage, onPageChange, onNavigateToSection, onAuthClick }) => {
+  onAuthClick: () => void;
+  onQuickOrderClick: () => void;
+}> = ({ currentPage, onPageChange, onNavigateToSection, onAuthClick, onQuickOrderClick }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   useEffect(() => {
@@ -878,55 +907,53 @@ const Navbar: React.FC<{
           ))}
         </div>
         <div className="hidden lg:flex items-center gap-4">
-          <button onClick={() => onPageChange('shop')} className={`px-6 py-2.5 rounded-full font-bold transition-all shadow-md flex items-center gap-2 ${currentPage === 'shop' ? 'bg-earth text-white' : 'bg-sage text-white hover:bg-earth'}`}><ShoppingCart size={16} /> 開始訂購</button>
+          <button onClick={onQuickOrderClick} className="px-6 py-2.5 bg-sage text-white rounded-full font-bold transition-all shadow-md flex items-center gap-2 hover:bg-earth"><ShoppingCart size={16} /> 開始訂購</button>
           <button onClick={onAuthClick} className="w-10 h-10 rounded-full bg-white border border-stone-200 flex items-center justify-center text-earth hover:text-sage transition-all"><User size={18} /></button>
         </div>
         <button className="lg:hidden" onClick={() => setMobileOpen(!mobileOpen)}>{mobileOpen ? <X /> : <Menu />}</button>
       </div>
+      {mobileOpen && (
+        <div className="lg:hidden glass absolute top-full left-0 right-0 p-8 flex flex-col gap-6 animate-fadeIn shadow-2xl">
+          {navItems.map((item, idx) => (
+            <button key={idx} onClick={() => { if (item.sectionId) onNavigateToSection(item.sectionId); else if (item.pageId) onPageChange(item.pageId); setMobileOpen(false); }} className="text-left text-xl font-bold text-earth hover:text-sage transition-colors">
+              {item.label}
+            </button>
+          ))}
+          <button onClick={() => { onQuickOrderClick(); setMobileOpen(false); }} className="w-full py-4 bg-sage text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl"><ShoppingCart size={20} /> 開始訂購</button>
+        </div>
+      )}
     </nav>
   );
 };
 
-const Footer: React.FC<{ onPageChange: (p: Page) => void; onNavigateToSection: (s: string) => void }> = ({ onPageChange, onNavigateToSection }) => {
-  return (
-    <footer className="bg-earth text-white pt-32 pb-12">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-24">
-          <div className="md:col-span-2 space-y-8">
-            <div className="flex items-center gap-3"><div className="w-12 h-12 bg-sage rounded-full flex items-center justify-center text-white"><Leaf size={24} /></div><span className="text-2xl font-bold">零浪費廚房 ZWK</span></div>
-            <h5 className="text-3xl font-bold max-w-sm leading-snug">加入循環經濟，<br />為下一代預約更好的未來。</h5>
-          </div>
-          <div className="space-y-6">
-            <h6 className="text-sage font-bold uppercase tracking-widest text-xs">探索與發現</h6>
-            <ul className="space-y-4 text-white/60 font-medium text-sm">
-              <li><button onClick={() => onPageChange('shop')} className="hover:text-white transition-colors">線上商店</button></li>
-              <li><button onClick={() => onPageChange('about')} className="hover:text-white transition-colors">關於 ZWK</button></li>
-              <li><button onClick={() => onPageChange('origins')} className="hover:text-white transition-colors">我們的產地</button></li>
-              <li><button onClick={() => onPageChange('faq')} className="hover:text-white transition-colors">常見問題 FAQ</button></li>
-              <li><button onClick={() => onPageChange('delivery')} className="hover:text-white transition-colors">配送範圍查詢</button></li>
-            </ul>
-          </div>
-          <div className="space-y-8">
-            <h6 className="text-sage font-bold uppercase tracking-widest text-xs">訂閱電子報</h6>
-            <div className="relative">
-              <input type="email" placeholder="您的電子信箱" className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 focus:outline-none focus:border-sage transition-all text-sm" />
-              <button className="absolute right-2 top-2 bottom-2 px-6 bg-sage rounded-xl font-bold hover:bg-white hover:text-earth transition-all text-xs">送出</button>
-            </div>
-          </div>
+const Footer: React.FC<{ onPageChange: (p: Page) => void }> = ({ onPageChange }) => (
+  <footer className="bg-earth text-white pt-32 pb-12">
+    <div className="max-w-7xl mx-auto px-6 text-center md:text-left">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-24">
+        <div className="md:col-span-2 space-y-8">
+          <div className="flex items-center justify-center md:justify-start gap-3"><div className="w-12 h-12 bg-sage rounded-full flex items-center justify-center text-white"><Leaf size={24} /></div><span className="text-2xl font-bold">零浪費廚房 ZWK</span></div>
+          <h5 className="text-3xl font-bold max-w-sm mx-auto md:mx-0 leading-snug">加入循環經濟，為下一代預約更好的未來。</h5>
         </div>
-        <div className="pt-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6 text-white/40 text-[10px] font-bold tracking-widest text-center md:text-left">
-          <p>© 2024 零浪費廚房 ZWK. ALL RIGHTS RESERVED.</p>
+        <div className="space-y-6">
+          <h6 className="text-sage font-bold uppercase tracking-widest text-xs">探索與發現</h6>
+          <ul className="space-y-4 text-white/60 font-medium text-sm">
+            {['shop', 'about', 'origins', 'faq', 'delivery'].map(p => <li key={p}><button onClick={() => onPageChange(p as Page)} className="hover:text-white transition-colors capitalize">{p}</button></li>)}
+          </ul>
         </div>
       </div>
-    </footer>
-  );
-};
+      <div className="pt-12 border-t border-white/10 text-white/40 text-[10px] font-bold tracking-widest">© 2024 零浪費廚房 ZWK. ALL RIGHTS RESERVED.</div>
+    </div>
+  </footer>
+);
 
+// --- Main App Component ---
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isImpactReportOpen, setIsImpactReportOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isPlanSelectionOpen, setIsPlanSelectionOpen] = useState(false);
+  
   const [currentQuantities, setCurrentQuantities] = useState<Record<number, number>>({});
   const [activePlan, setActivePlan] = useState<ActivePlan | null>(null);
   const [planToPreview, setPlanToPreview] = useState<ActivePlan | null>(null);
@@ -957,6 +984,11 @@ export default function App() {
     }
   };
 
+  const handlePlanSelectFromModal = (plan: ActivePlan) => {
+    setIsPlanSelectionOpen(false);
+    setPlanToPreview(plan); // 進入預覽確認流程
+  };
+
   const handleClearPlan = () => {
     setActivePlan(null);
     setCurrentQuantities({});
@@ -968,7 +1000,7 @@ export default function App() {
         <HomeView 
           onPlanSelect={setPlanToPreview} 
           onOpenReport={() => setIsImpactReportOpen(true)} 
-          onShopClick={() => setCurrentPage('shop')} 
+          onShopClick={() => setIsPlanSelectionOpen(true)} 
         />
       );
       case 'shop': return (
@@ -993,17 +1025,27 @@ export default function App() {
         onPageChange={setCurrentPage} 
         onNavigateToSection={handleNavigateToSection}
         onAuthClick={() => setIsAuthModalOpen(true)} 
+        onQuickOrderClick={() => setIsPlanSelectionOpen(true)}
       />
       <main className="min-h-screen">{renderContent()}</main>
-      <Footer onPageChange={setCurrentPage} onNavigateToSection={handleNavigateToSection} />
+      <Footer onPageChange={setCurrentPage} />
       <AIChat />
+      
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
       <ImpactReportModal isOpen={isImpactReportOpen} onClose={() => setIsImpactReportOpen(false)} />
+      
+      <PlanSelectionModal 
+        isOpen={isPlanSelectionOpen} 
+        onClose={() => setIsPlanSelectionOpen(false)} 
+        onSelect={handlePlanSelectFromModal} 
+      />
+      
       <PlanPreviewModal 
         plan={planToPreview} 
         onClose={() => setPlanToPreview(null)} 
         onConfirm={confirmPlanSelection} 
       />
+      
       <CheckoutModal 
         isOpen={isCheckoutOpen} 
         onClose={() => setIsCheckoutOpen(false)} 
